@@ -14,10 +14,12 @@
 /* Identità del format: non si tocca tra una puntata e l'altra. */
 :root {
   --carta: #f2eadb;
+  --kraft: #c9b99a;
   --nero: #161412;
   --rosso: #d7141a;
   --fondo: #2c2b29;
   --font: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 *,
@@ -27,28 +29,50 @@
   margin: 0;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   height: 100%;
   background: var(--fondo);
 }
 
+html {
+  /* Niente zoom da doppio tocco né riquadro grigio sul tap. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   overflow: hidden;
   font-family: var(--font);
+  /* Una pressione lunga non deve mai far comparire selezione o lente nel video. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
-/* ---------- Stage 9:16, progettato a 1080×1920 logici ---------- */
+/* ---------- Pagina ----------
+   Lo stage 9:16 è centrato; i comandi stanno sempre in basso, sotto il nome, larghi quanto lo stage. */
 
 .pagina {
   height: 100dvh;
+}
+
+.scena {
+  height: 100%;
+  container-type: size;
   display: grid;
   place-items: center;
 }
 
+/* ---------- Stage 9:16, progettato a 1080×1920 logici ---------- */
+
 .stage {
   position: relative;
-  height: min(100dvh, 100vw * 16 / 9);
+  width: min(100cqw, 100cqh * 9 / 16);
   aspect-ratio: 9 / 16;
   overflow: hidden;
   background: var(--carta);
@@ -67,15 +91,23 @@ body {
 
 /* Margini di sicurezza IG: 0–288 in alto (15%), 1536–1920 in basso (20%). */
 
-.zona-ruote {
+/* Ruote, titolo e risultati impilati; i risultati prendono lo spazio che resta.
+   La cima della ruota grande sale oltre il margine alto IG (288) per lasciare al nome
+   una fascia di 364px: 1352 = ruota 840 + titolo 78 + 14 + risultati 420. */
+.composizione {
   position: absolute;
-  top: 300px;
+  top: 168px;
   left: 60px;
   right: 60px;
-  height: 650px;
+  height: 1352px;
+  display: flex;
+  flex-direction: column;
+}
+
+.zona-ruote {
+  flex: none;
   display: flex;
   justify-content: center;
-  align-items: center;
   gap: 40px;
 }
 
@@ -115,23 +147,28 @@ body {
   fill: var(--rosso);
 }
 
-.spicchio-chiaro {
+/* Tre toni neutri, mai due uguali accanto: il colore resta tutto sul nome. */
+.spicchio {
+  stroke: var(--nero);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+.tono-0 {
+  fill: var(--nero);
+}
+.tono-1 {
   fill: var(--carta);
 }
-.spicchio-scuro {
-  fill: var(--nero);
-  stroke: var(--carta);
-  stroke-width: 6;
+.tono-2 {
+  fill: var(--kraft);
 }
 .ruota-disco text {
   font-family: var(--font);
   font-weight: 600;
-}
-.testo-su-scuro {
-  fill: var(--carta);
-}
-.testo-su-chiaro {
   fill: var(--nero);
+}
+.ruota-disco text.tono-0 {
+  fill: var(--carta);
 }
 .anello {
   fill: none;
@@ -146,23 +183,19 @@ body {
 }
 
 .titolo {
-  position: absolute;
-  top: 968px;
-  left: 60px;
-  right: 60px;
+  flex: none;
+  margin-top: 18px;
   text-align: center;
   font-weight: 600;
-  font-size: 64px;
+  font-size: 60px;
   line-height: 1;
   color: var(--nero);
 }
 
 .zona-risultati {
-  position: absolute;
-  top: 1050px;
-  left: 60px;
-  right: 60px;
-  height: 470px;
+  flex: 1;
+  min-height: 0;
+  margin-top: 14px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -279,71 +312,96 @@ body {
   line-height: 1.15;
 }
 
-/* ---------- Pannello di servizio: fuori dallo stage, mai nell'inquadratura ---------- */
-
-.pannello {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  width: 230px;
-  font: 13px/1.45 system-ui, sans-serif;
-  color: #b9b4ab;
-}
+/* ---------- Comandi: in basso, sotto il nome, larghi quanto lo stage ---------- */
 
 .comandi {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  translate: -50% 0;
+  width: min(100vw, 100dvh * 9 / 16);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: 10px;
+  padding: 0 16px calc(env(safe-area-inset-bottom) + 16px);
+  container-type: inline-size;
 }
-.in-giro .comandi,
-.vista-finalisti .comandi {
+/* Nascosti durante il giro e per 2 s dopo l'arresto: margine pulito per tagliare il video. */
+.comandi-nascosti .comandi {
   visibility: hidden;
 }
-
-.comandi button {
-  display: flex;
-  justify-content: space-between;
-  padding: 7px 10px;
-  font: inherit;
-  color: #eee9df;
-  background: #3a3936;
-  border: 1px solid #4a4845;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.comandi button:hover {
-  background: #45433f;
-}
-.comandi kbd {
-  font: inherit;
-  color: #8f8a82;
+.vista-finalisti .comandi {
+  display: none;
 }
 
 .stato {
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
+  text-align: center;
+  font: 500 13px/1.3 var(--font-ui);
+  color: #8a5a00;
 }
-.puntino {
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #6a665f;
-}
-.puntino[data-fonte="rete"] {
-  background: #7fa36b;
-}
-.puntino[data-fonte="cache"] {
-  background: #d9a441;
-}
-.puntino[data-fonte="errore"] {
-  background: #d95a4a;
+.stato[data-fonte="errore"] {
+  color: #b3261e;
 }
 
-.dettagli {
-  margin-top: 10px;
-  white-space: pre-line;
-  color: #8f8a82;
+.pulsanti {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Un pulsante non è mai più stretto del suo testo; su stage stretti testo e margini si riducono. */
+.pulsanti button {
+  flex: 1 1 0;
+  min-width: max-content;
+  height: 48px;
+  padding: 0 clamp(10px, 3.5cqi, 16px);
+  font: 600 clamp(13px, 4.3cqi, 16px) / 1 var(--font-ui);
+  white-space: nowrap;
+  color: var(--nero);
+  background: rgb(22 20 18 / 0.08);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    transform 0.1s;
+}
+.pulsanti button:active {
+  transform: scale(0.97);
+  background: rgb(22 20 18 / 0.15);
+}
+.pulsanti button:focus-visible {
+  outline: 2px solid var(--nero);
+  outline-offset: 2px;
+}
+
+/* Gira: più alto e più largo degli altri due. */
+.pulsanti .primario {
+  flex: 1.4 1 0;
+  height: 60px;
+  font-size: clamp(16px, 5.4cqi, 20px);
+  font-weight: 700;
+  color: #fff;
+  background: var(--rosso);
+}
+.pulsanti .primario:active {
+  background: #b01016;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pulsanti button:hover {
+    background: rgb(22 20 18 / 0.13);
+  }
+  .pulsanti .primario:hover {
+    background: #c11218;
+  }
+}
+
+/* Telefono: niente bordi scuri, tutto carta. Lo stage resta centrato, così il ritaglio 9:16
+   di Instagram cade su di lui e i pulsanti restano sotto, nella fascia carta in più. */
+@media (max-width: 699px) and (orientation: portrait) {
+  html,
+  body {
+    background: var(--carta);
+  }
 }

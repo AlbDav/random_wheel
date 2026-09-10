@@ -7,7 +7,14 @@ import "../styles/global.css";
 <html lang="it">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f2eadb" media="(orientation: portrait)" />
+    <meta name="theme-color" content="#2c2b29" media="(orientation: landscape)" />
+    <!-- Aggiunta alla schermata Home: si apre a schermo intero, senza barre di Safari da ritagliare. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Ruota" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preload" href="/fonts/barlow-condensed-900.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin />
@@ -15,18 +22,19 @@ import "../styles/global.css";
   </head>
   <body>
     <main class="pagina">
-      <div class="stage" id="stage"><div class="tela" id="tela"></div></div>
-    </main>
-
-    <aside class="pannello">
-      <div class="comandi">
-        <button type="button" data-azione="gira">Gira <kbd>spazio</kbd></button>
-        <button type="button" data-azione="rimescola">Rimescola <kbd>R</kbd></button>
-        <button type="button" data-azione="ricarica">Ricarica liste <kbd>L</kbd></button>
+      <div class="scena">
+        <div class="stage" id="stage"><div class="tela" id="tela"></div></div>
       </div>
-      <p class="stato"><span class="puntino" id="puntino"></span><span id="stato">caricamento…</span></p>
-      <p class="dettagli" id="dettagli"></p>
-    </aside>
+
+      <nav class="comandi" aria-label="Comandi">
+        <p class="stato" id="stato" hidden></p>
+        <div class="pulsanti">
+          <button type="button" data-azione="rimescola">Rimescola</button>
+          <button type="button" data-azione="gira" class="primario">Gira</button>
+          <button type="button" data-azione="ricarica">Ricarica</button>
+        </div>
+      </nav>
+    </main>
 
     <script>
       import "../scripts/app.ts";

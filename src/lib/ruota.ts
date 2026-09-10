@@ -27,6 +27,15 @@ function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string,
   return el;
 }
 
+/**
+ * Tono dello spicchio `i` su `n`: ciclo di tre toni, senza mai due spicchi adiacenti uguali,
+ * nemmeno l'ultimo con il primo (quando n % 3 === 1 l'ultimo prende il secondo tono).
+ */
+function tono(i: number, n: number): number {
+  if (n > 1 && n % 3 === 1 && i === n - 1) return 1;
+  return i % 3;
+}
+
 /** Punto sul cerchio: angolo in gradi, 0 = ore 12, senso orario. */
 function punto(gradi: number, r: number): string {
   const t = (gradi * Math.PI) / 180;
@@ -57,16 +66,15 @@ export function creaRuota(label: string): Ruota {
     disco.replaceChildren();
     const n = righe.length;
     const passo = 360 / n;
-    disco.append(svg("circle", { r: R, class: "spicchio-chiaro" }));
 
     const testi: SVGTextElement[] = [];
     righe.forEach((riga, i) => {
-      const scuro = i % 2 === 0;
+      const classeTono = `tono-${tono(i, n)}`;
       const centro = i * passo;
-      if (n === 1) disco.append(svg("circle", { r: R, class: "spicchio-scuro" }));
-      else if (scuro) {
+      if (n === 1) disco.append(svg("circle", { r: R, class: `spicchio ${classeTono}` }));
+      else {
         const d = `M0 0L${punto(centro - passo / 2, R)}A${R} ${R} 0 ${passo > 180 ? 1 : 0} 1 ${punto(centro + passo / 2, R)}Z`;
-        disco.append(svg("path", { d, class: "spicchio-scuro" }));
+        disco.append(svg("path", { d, class: `spicchio ${classeTono}` }));
       }
       // Il testo corre dal mozzo verso il bordo, allineato alla fine.
       const t = svg("text", {
@@ -74,7 +82,7 @@ export function creaRuota(label: string): Ruota {
         dy: "0.35em",
         "text-anchor": "end",
         transform: `rotate(${centro - 90})`,
-        class: scuro ? "testo-su-scuro" : "testo-su-chiaro",
+        class: classeTono,
       });
       t.textContent = perSchermo(riga.nome);
       disco.append(t);

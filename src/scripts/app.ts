@@ -8,6 +8,8 @@ import type { Riga, RuotaConfig } from "../lib/types";
 const params = new URLSearchParams(location.search);
 const { id: presetId, preset } = leggiPreset(params);
 const SPIN_MS = preset.spin_ms ?? 2000;
+/** Dopo l'arresto i comandi restano nascosti ancora così: video pulito su cui tagliare. */
+const COMANDI_DOPO_MS = 2000;
 
 const $ = (sel: string) => document.querySelector<HTMLElement>(sel)!;
 const stage = $("#stage");
@@ -41,12 +43,12 @@ const slots: Slot[] = preset.ruote.map((cfg) => ({
 }));
 
 const estraibili = (s: Slot) => (s.cfg.no_ripetizioni ? s.pool.filter((r) => !s.usciti.has(r.nome)) : s.pool);
+const nomeRuota = (s: Slot, i: number) => s.cfg.label || `ruota ${i + 1}`;
 
 // ---------- Scala dello stage ----------
 
 new ResizeObserver(() => {
-  const { width, height } = stage.getBoundingClientRect();
-  tela.style.setProperty("--scala", String(width / 1080));
+  tela.style.setProperty("--scala", String(stage.getBoundingClientRect().width / 1080));
   // Chrome non reimpagina il testo SVG quando cambia la scala di un antenato: senza questo,
   // dopo un resize le etichette degli spicchi escono dalla ruota.
   for (const disco of tela.querySelectorAll<SVGSVGElement>(".ruota-disco")) {
@@ -54,37 +56,30 @@ new ResizeObserver(() => {
     disco.getBoundingClientRect();
     disco.style.display = "";
   }
-  misure = `stage ${Math.round(width)}×${Math.round(height)} css · ${Math.round(width * devicePixelRatio)}×${Math.round(height * devicePixelRatio)} px`;
-  aggiornaDettagli();
 }).observe(stage);
 
-// ---------- Pannello di servizio (fuori dallo stage) ----------
+// ---------- Stato (nella barra comandi, fuori dallo stage) ----------
 
-let misure = "";
+type Fonte = "carico" | "rete" | "cache" | "errore";
 
-function stato(testo: string, fonte?: "rete" | "cache" | "errore") {
-  $("#stato").textContent = testo;
-  const p = $("#puntino");
-  if (fonte) p.dataset.fonte = fonte;
-  else delete p.dataset.fonte;
+/** Riga sopra i pulsanti, solo quando c'è qualcosa da sapere. `dettaglio` va nel tooltip di Ricarica. */
+function stato(fonte: Fonte, testo = "", dettaglio = testo) {
+  const riga = $("#stato");
+  riga.dataset.fonte = fonte;
+  riga.textContent = testo;
+  riga.title = dettaglio;
+  riga.hidden = !testo;
+  $('[data-azione="ricarica"]').title = dettaglio;
 }
+
+const quando = (ts: number) =>
+  new Date(ts).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 function statoListe(liste: Lista[]) {
-  const quando = (ts: number) =>
-    new Date(ts).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
   const inCache = liste.filter((l) => l.fonte === "cache");
-  if (inCache.length === 0) return stato(`live · ${quando(Date.now())}`, "rete");
+  if (inCache.length === 0) return stato("rete", "", `Lista aggiornata: ${quando(Date.now())}`);
   const piuVecchia = Math.min(...inCache.map((l) => l.ts));
-  stato(`cache del ${quando(piuVecchia)} · ${inCache[0].errore}`, "cache");
-}
-
-function aggiornaDettagli() {
-  const righe = slots.map((s, i) => {
-    const nome = s.cfg.label || `ruota ${i + 1}`;
-    const usciti = s.cfg.no_ripetizioni ? ` · usciti ${s.usciti.size}` : "";
-    return `${nome}: pool ${s.pool.length} · in ruota ${s.finalisti.length}${usciti}`;
-  });
-  $("#dettagli").textContent = [`preset “${presetId}”`, ...righe, misure].join("\n");
+  stato("cache", `Offline · lista del ${quando(piuVecchia)}`, inCache[0].errore);
 }
 
 function mostraErrore(motivo: string) {
@@ -96,14 +91,14 @@ function mostraErrore(motivo: string) {
   p.textContent = motivo;
   box.append(h, p);
   tela.append(box);
-  stato(motivo, "errore");
+  stato("errore", "Lista non caricata", motivo);
 }
 
 // ---------- Dati ----------
 
 /** Scarica le liste e ricalcola pool e finalisti. False se non c'è niente da estrarre. */
 async function aggiornaDati(): Promise<boolean> {
-  stato("caricamento…");
+  stato("carico");
   let liste: Lista[];
   try {
     liste = await caricaListe(preset.ruote);
@@ -118,13 +113,12 @@ async function aggiornaDati(): Promise<boolean> {
       return false;
     }
     s.finalisti = finalisti(presetId, i, estraibili(s), preset.finalisti);
-    console.groupCollapsed(`[${s.cfg.label || `ruota ${i + 1}`}] gid ${s.cfg.gid} · ${liste[i].fonte} · pool ${s.pool.length}`);
+    console.groupCollapsed(`[${nomeRuota(s, i)}] gid ${s.cfg.gid} · ${liste[i].fonte} · pool ${s.pool.length}`);
     console.table(s.pool);
     console.log("finalisti", s.finalisti.map((r) => r.nome));
     console.groupEnd();
   }
   statoListe(liste);
-  aggiornaDettagli();
   return true;
 }
 
@@ -132,12 +126,14 @@ async function aggiornaDati(): Promise<boolean> {
 
 let pronto = false;
 let inGiro = false;
+let timerComandi: ReturnType<typeof setTimeout> | undefined;
 
 function montaRuote() {
   const n = slots.length;
   const conLabel = slots.some((s) => s.cfg.label);
-  const d = Math.floor(Math.min(620 - (conLabel ? 60 : 0), (960 - (n - 1) * 40) / n));
+  const d = Math.floor(Math.min(840 - (conLabel ? 60 : 0), (960 - (n - 1) * 40) / n));
 
+  const composizione = div("composizione");
   const zona = div("zona-ruote");
   zona.style.setProperty("--d", `${d}px`);
   const risultati = div("zona-risultati");
@@ -157,9 +153,10 @@ function montaRuote() {
     }
     risultati.append(r);
   }
-  tela.append(zona);
-  if (preset.titolo) tela.append(div("titolo", preset.titolo));
-  tela.append(risultati);
+  composizione.append(zona);
+  if (preset.titolo) composizione.append(div("titolo", preset.titolo));
+  composizione.append(risultati);
+  tela.append(composizione);
 }
 
 function pulisciRisultati() {
@@ -198,7 +195,7 @@ async function gira() {
     const rimasti = s.finalisti.filter((r) => !s.usciti.has(r.nome));
     if (rimasti.length === s.finalisti.length) continue;
     if (rimasti.length === 0 && estraibili(s).length === 0) {
-      stato(`${s.cfg.label || `ruota ${i + 1}`}: tutti i nomi sono già usciti`, "errore");
+      stato("errore", `${nomeRuota(s, i)}: tutti i nomi sono già usciti`);
       return;
     }
     s.finalisti = rimasti.length ? rimasti : finalisti(presetId, i, estraibili(s), preset.finalisti, true);
@@ -206,7 +203,8 @@ async function gira() {
   }
 
   inGiro = true;
-  document.body.classList.add("in-giro");
+  clearTimeout(timerComandi);
+  document.body.classList.add("comandi-nascosti");
   pulisciRisultati();
 
   const vincitori = await Promise.all(slots.map((s) => s.ruota!.spin(SPIN_MS)));
@@ -222,8 +220,7 @@ async function gira() {
   });
 
   inGiro = false;
-  document.body.classList.remove("in-giro");
-  aggiornaDettagli();
+  timerComandi = setTimeout(() => document.body.classList.remove("comandi-nascosti"), COMANDI_DOPO_MS);
 }
 
 function rimescola() {
@@ -233,7 +230,6 @@ function rimescola() {
     s.ruota!.setFinalisti(s.finalisti);
   }
   pulisciRisultati();
-  aggiornaDettagli();
 }
 
 async function ricarica() {
@@ -314,5 +310,7 @@ if (params.get("view") === "finalisti") {
     e.preventDefault();
     azione();
   });
+  // Da telefono: toccare lo schermo fa girare, senza dover cercare il pulsante.
+  $(".scena").addEventListener("click", gira);
   await avviaRuota();
 }
