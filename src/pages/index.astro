@@ -1,0 +1,35 @@
+---
+// Pagina interamente statica: preset, liste e ruota vengono costruiti nel browser a runtime.
+// Niente fetch qui: i dati del foglio non devono finire nel bundle.
+import "../styles/global.css";
+---
+
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href="/fonts/barlow-condensed-900.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin />
+    <title>Ruota</title>
+  </head>
+  <body>
+    <main class="pagina">
+      <div class="stage" id="stage"><div class="tela" id="tela"></div></div>
+    </main>
+
+    <aside class="pannello">
+      <div class="comandi">
+        <button type="button" data-azione="gira">Gira <kbd>spazio</kbd></button>
+        <button type="button" data-azione="rimescola">Rimescola <kbd>R</kbd></button>
+        <button type="button" data-azione="ricarica">Ricarica liste <kbd>L</kbd></button>
+      </div>
+      <p class="stato"><span class="puntino" id="puntino"></span><span id="stato">caricamento…</span></p>
+      <p class="dettagli" id="dettagli"></p>
+    </aside>
+
+    <script>
+      import "../scripts/app.ts";
+    </script>
+  </body>
+</html>

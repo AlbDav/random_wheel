@@ -1,0 +1,17 @@
+{
+  "paesi": {
+    "titolo": "Oggi tocca a",
+    "spin_ms": 2000,
+    "finalisti": 8,
+    "ruote": [
+      {
+        "label": "",
+        "gid": "0",
+        "sottotitolo": "proposto_da",
+        "escludi_se_pieno": "usato",
+        "enfasi": 2,
+        "no_ripetizioni": false
+      }
+    ]
+  }
+}
