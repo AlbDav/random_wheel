@@ -73,11 +73,17 @@ Più ruote nello stesso preset girano insieme e si fermano nello stesso frame. N
 | `R`      | Rimescola i finalisti (nuovo campione, senza fetch)        |
 | `L`      | Ricarica le liste dal foglio                               |
 
-I pulsanti equivalenti stanno fuori dallo stage e spariscono durante il giro. Sullo stage il cursore è nascosto.
+Da telefono: tocca lo schermo per girare (fondo tutto carta, senza bordi scuri). I pulsanti stanno sempre
+in basso, sotto il nome, larghi quanto lo stage: su desktop nella fascia bassa dello stage, su telefono
+nella fascia carta sotto. Spariscono durante il giro e ricompaiono 2 secondi dopo l'arresto, così dopo lo
+stop c'è video pulito su cui tagliare (`COMANDI_DOPO_MS` in `src/scripts/app.ts`). Sullo stage il cursore
+è nascosto.
 
-Il pannello in alto a sinistra (fuori dall'inquadratura) mostra lo stato: puntino verde = dati live,
-ambra = copia in cache perché il foglio non risponde (con il motivo). Mostra anche la dimensione esatta
-dello stage in pixel, utile per impostare l'area dello screen recorder.
+Se il foglio non risponde e si usa la copia in cache, sopra i pulsanti compare la riga
+"Offline · lista del …" (rossa in caso di errore). Pool e finalisti sono stampati in console.
+
+Per registrare dal telefono: in Safari, Condividi → Aggiungi alla schermata Home. Aperta da lì, l'app va
+a schermo intero, senza barre del browser da ritagliare.
 
 - `/?p=paesi&view=finalisti`: i nomi in gara su fondo pulito, 9:16, da screenshottare per le storie.
 

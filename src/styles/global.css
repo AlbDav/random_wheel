@@ -1,0 +1,407 @@
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("/fonts/barlow-condensed-600.woff2") format("woff2");
+  font-weight: 600;
+  font-display: block;
+}
+@font-face {
+  font-family: "Barlow Condensed";
+  src: url("/fonts/barlow-condensed-900.woff2") format("woff2");
+  font-weight: 900;
+  font-display: block;
+}
+
+/* Identità del format: non si tocca tra una puntata e l'altra. */
+:root {
+  --carta: #f2eadb;
+  --kraft: #c9b99a;
+  --nero: #161412;
+  --rosso: #d7141a;
+  --fondo: #2c2b29;
+  --font: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--fondo);
+}
+
+html {
+  /* Niente zoom da doppio tocco né riquadro grigio sul tap. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  overflow: hidden;
+  font-family: var(--font);
+  /* Una pressione lunga non deve mai far comparire selezione o lente nel video. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* ---------- Pagina ----------
+   Lo stage 9:16 è centrato; i comandi stanno sempre in basso, sotto il nome, larghi quanto lo stage. */
+
+.pagina {
+  height: 100dvh;
+}
+
+.scena {
+  height: 100%;
+  container-type: size;
+  display: grid;
+  place-items: center;
+}
+
+/* ---------- Stage 9:16, progettato a 1080×1920 logici ---------- */
+
+.stage {
+  position: relative;
+  width: min(100cqw, 100cqh * 9 / 16);
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  background: var(--carta);
+  cursor: none;
+}
+
+.tela {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1080px;
+  height: 1920px;
+  transform-origin: 0 0;
+  transform: scale(var(--scala, 1));
+}
+
+/* Margini di sicurezza IG: 0–288 in alto (15%), 1536–1920 in basso (20%). */
+
+/* Ruote, titolo e risultati impilati; i risultati prendono lo spazio che resta.
+   La cima della ruota grande sale oltre il margine alto IG (288) per lasciare al nome
+   una fascia di 364px: 1352 = ruota 840 + titolo 78 + 14 + risultati 420. */
+.composizione {
+  position: absolute;
+  top: 168px;
+  left: 60px;
+  right: 60px;
+  height: 1352px;
+  display: flex;
+  flex-direction: column;
+}
+
+.zona-ruote {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.ruota {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: var(--d);
+}
+
+.ruota-label {
+  font-weight: 600;
+  font-size: 44px;
+  line-height: 1;
+  color: var(--nero);
+}
+
+.ruota-corpo {
+  position: relative;
+  width: var(--d);
+  aspect-ratio: 1;
+}
+
+.ruota-disco {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ruota-puntatore {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--d) * -0.035);
+  width: calc(var(--d) * 0.1);
+  translate: -50% 0;
+  fill: var(--rosso);
+}
+
+/* Tre toni neutri, mai due uguali accanto: il colore resta tutto sul nome. */
+.spicchio {
+  stroke: var(--nero);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+.tono-0 {
+  fill: var(--nero);
+}
+.tono-1 {
+  fill: var(--carta);
+}
+.tono-2 {
+  fill: var(--kraft);
+}
+.ruota-disco text {
+  font-family: var(--font);
+  font-weight: 600;
+  fill: var(--nero);
+}
+.ruota-disco text.tono-0 {
+  fill: var(--carta);
+}
+.anello {
+  fill: none;
+  stroke: var(--nero);
+  stroke-width: 16;
+}
+.mozzo {
+  fill: var(--nero);
+}
+.rivetto {
+  fill: var(--carta);
+}
+
+.titolo {
+  flex: none;
+  margin-top: 18px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 60px;
+  line-height: 1;
+  color: var(--nero);
+}
+
+.zona-risultati {
+  flex: 1;
+  min-height: 0;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.risultato {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 2;
+}
+.risultato[data-enfasi="1"] {
+  flex: 1;
+}
+
+.nome-box {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.nome {
+  width: 100%;
+  text-align: center;
+  font-weight: 900;
+  line-height: 0.9;
+  color: var(--rosso);
+  text-wrap: balance;
+  overflow-wrap: normal;
+}
+
+.sotto {
+  height: 56px;
+  font-weight: 600;
+  font-size: 44px;
+  line-height: 56px;
+  text-align: center;
+  color: var(--nero);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.risultato[data-enfasi="1"] .sotto {
+  height: 40px;
+  font-size: 32px;
+  line-height: 40px;
+}
+
+/* ---------- Vista finalisti ---------- */
+
+.fin-zona {
+  position: absolute;
+  top: 300px;
+  left: 60px;
+  right: 60px;
+  height: 1220px;
+  display: flex;
+  align-items: center;
+}
+
+.fin-lista {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.fin-titolo {
+  text-align: center;
+  font-weight: 600;
+  font-size: 64px;
+  line-height: 1;
+  color: var(--nero);
+}
+
+.fin-label {
+  text-align: center;
+  font-weight: 600;
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 12px;
+  color: var(--nero);
+}
+
+.fin-nome {
+  height: var(--riga);
+  line-height: var(--riga);
+  text-align: center;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  color: var(--rosso);
+}
+
+/* ---------- Errore (solo quando non c'è nulla da mostrare) ---------- */
+
+.errore {
+  position: absolute;
+  top: 700px;
+  left: 80px;
+  right: 80px;
+  color: var(--nero);
+}
+.errore h1 {
+  font-weight: 900;
+  font-size: 96px;
+  line-height: 0.95;
+}
+.errore p {
+  margin-top: 32px;
+  font-weight: 600;
+  font-size: 44px;
+  line-height: 1.15;
+}
+
+/* ---------- Comandi: in basso, sotto il nome, larghi quanto lo stage ---------- */
+
+.comandi {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  translate: -50% 0;
+  width: min(100vw, 100dvh * 9 / 16);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px calc(env(safe-area-inset-bottom) + 16px);
+  container-type: inline-size;
+}
+/* Nascosti durante il giro e per 2 s dopo l'arresto: margine pulito per tagliare il video. */
+.comandi-nascosti .comandi {
+  visibility: hidden;
+}
+.vista-finalisti .comandi {
+  display: none;
+}
+
+.stato {
+  text-align: center;
+  font: 500 13px/1.3 var(--font-ui);
+  color: #8a5a00;
+}
+.stato[data-fonte="errore"] {
+  color: #b3261e;
+}
+
+.pulsanti {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Un pulsante non è mai più stretto del suo testo; su stage stretti testo e margini si riducono. */
+.pulsanti button {
+  flex: 1 1 0;
+  min-width: max-content;
+  height: 48px;
+  padding: 0 clamp(10px, 3.5cqi, 16px);
+  font: 600 clamp(13px, 4.3cqi, 16px) / 1 var(--font-ui);
+  white-space: nowrap;
+  color: var(--nero);
+  background: rgb(22 20 18 / 0.08);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    transform 0.1s;
+}
+.pulsanti button:active {
+  transform: scale(0.97);
+  background: rgb(22 20 18 / 0.15);
+}
+.pulsanti button:focus-visible {
+  outline: 2px solid var(--nero);
+  outline-offset: 2px;
+}
+
+/* Gira: più alto e più largo degli altri due. */
+.pulsanti .primario {
+  flex: 1.4 1 0;
+  height: 60px;
+  font-size: clamp(16px, 5.4cqi, 20px);
+  font-weight: 700;
+  color: #fff;
+  background: var(--rosso);
+}
+.pulsanti .primario:active {
+  background: #b01016;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pulsanti button:hover {
+    background: rgb(22 20 18 / 0.13);
+  }
+  .pulsanti .primario:hover {
+    background: #c11218;
+  }
+}
+
+/* Telefono: niente bordi scuri, tutto carta. Lo stage resta centrato, così il ritaglio 9:16
+   di Instagram cade su di lui e i pulsanti restano sotto, nella fascia carta in più. */
+@media (max-width: 699px) and (orientation: portrait) {
+  html,
+  body {
+    background: var(--carta);
+  }
+}
