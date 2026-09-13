@@ -17,6 +17,9 @@ const MOZZO = 62;
 const MARGINE_BORDO = 46; // dal bordo all'inizio del testo
 const MARGINE_MOZZO = 24;
 const CORPO_MAX = 58;
+// Altezza delle maiuscole di Barlow Condensed in frazione del corpo (misurata: 70,9/100).
+// Il testo scende di metà di questa per avere le maiuscole centrate sull'asse dello spicchio.
+const MEZZE_MAIUSCOLE = 0.709 / 2;
 // Forte decelerazione ma velocità finale non nulla: l'arresto cade in un frame preciso,
 // senza un lungo strisciare impercettibile prima che compaia il nome.
 const EASING = "cubic-bezier(0.2, 0.62, 0.45, 0.97)";
@@ -76,10 +79,10 @@ export function creaRuota(label: string): Ruota {
         const d = `M0 0L${punto(centro - passo / 2, R)}A${R} ${R} 0 ${passo > 180 ? 1 : 0} 1 ${punto(centro + passo / 2, R)}Z`;
         disco.append(svg("path", { d, class: `spicchio ${classeTono}` }));
       }
-      // Il testo corre dal mozzo verso il bordo, allineato alla fine.
+      // Il testo corre dal mozzo verso il bordo, allineato alla fine. La `y` si calcola sotto,
+      // in unità del viewBox: Safari non risolve `dy="…em"` come Chrome e sposta le etichette.
       const t = svg("text", {
         x: R - MARGINE_BORDO,
-        dy: "0.35em",
         "text-anchor": "end",
         transform: `rotate(${centro - 90})`,
         class: classeTono,
@@ -105,7 +108,9 @@ export function creaRuota(label: string): Ruota {
       const k = (t.getComputedTextLength() || (t.textContent?.length ?? 1) * 50) / 100;
       // Dove il testo comincia (raggio esterno − k·corpo) lo spicchio dev'essere largo almeno quanto il corpo.
       const perCorda = (corda * esterno) / (1 + corda * k);
-      t.setAttribute("font-size", Math.min(tetto, lunghezza / k, perCorda).toFixed(1));
+      const corpo = Math.min(tetto, lunghezza / k, perCorda);
+      t.setAttribute("font-size", corpo.toFixed(1));
+      t.setAttribute("y", (corpo * MEZZE_MAIUSCOLE).toFixed(1));
     }
   }
 

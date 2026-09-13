@@ -79,7 +79,8 @@ function statoListe(liste: Lista[]) {
   const inCache = liste.filter((l) => l.fonte === "cache");
   if (inCache.length === 0) return stato("rete", "", `Lista aggiornata: ${quando(Date.now())}`);
   const piuVecchia = Math.min(...inCache.map((l) => l.ts));
-  stato("cache", `Offline · lista del ${quando(piuVecchia)}`, inCache[0].errore);
+  // Il motivo va nel testo, non solo nel tooltip: da telefono i tooltip non esistono.
+  stato("cache", `Offline · lista del ${quando(piuVecchia)} · ${inCache[0].errore}`, inCache[0].errore);
 }
 
 function mostraErrore(motivo: string) {
