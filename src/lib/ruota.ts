@@ -94,12 +94,18 @@ export function creaRuota(label: string): Ruota {
     disco.append(svg("circle", { r: 14, class: "rivetto" }));
 
     // Corpo per spicchio: il più grande che sta tra mozzo e bordo e nella larghezza dello spicchio.
-    const lunghezza = R - MARGINE_BORDO - MOZZO - MARGINE_MOZZO;
-    const tetto = Math.min(CORPO_MAX, 0.66 * R * Math.sin(((Math.min(passo, 180) / 2) * Math.PI) / 180));
+    const esterno = R - MARGINE_BORDO;
+    const lunghezza = esterno - MOZZO - MARGINE_MOZZO;
+    const semiAngolo = ((Math.min(passo, 180) / 2) * Math.PI) / 180;
+    const tetto = Math.min(CORPO_MAX, 0.66 * R * Math.sin(semiAngolo));
+    // Larghezza utile dello spicchio per unità di raggio: più spicchi, più stretta verso il mozzo.
+    const corda = 2 * Math.sin(semiAngolo) * 0.85;
     for (const t of testi) {
       t.setAttribute("font-size", "100");
-      const l100 = t.getComputedTextLength() || (t.textContent?.length ?? 1) * 50;
-      t.setAttribute("font-size", Math.min(tetto, (lunghezza / l100) * 100).toFixed(1));
+      const k = (t.getComputedTextLength() || (t.textContent?.length ?? 1) * 50) / 100;
+      // Dove il testo comincia (raggio esterno − k·corpo) lo spicchio dev'essere largo almeno quanto il corpo.
+      const perCorda = (corda * esterno) / (1 + corda * k);
+      t.setAttribute("font-size", Math.min(tetto, lunghezza / k, perCorda).toFixed(1));
     }
   }
 
