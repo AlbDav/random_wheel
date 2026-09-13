@@ -120,10 +120,10 @@ export function creaRuota(label: string): Ruota {
       if (!n) throw new Error("ruota senza finalisti");
       const k = randInt(n);
       const passo = 360 / n;
-      // Mai esattamente sul confine tra due spicchi, mai sempre al centro.
-      const scarto = (Math.random() - 0.5) * 0.7 * passo;
+      // Si ferma con il centro dello spicchio vincente esattamente sotto il puntatore:
+      // l'etichetta del vincitore resta dritta, in verticale.
       const giri = Math.max(2, Math.round(durataMs / 500));
-      const resto = (((-k * passo + scarto - rotazione) % 360) + 360) % 360;
+      const resto = (((-k * passo - rotazione) % 360) + 360) % 360;
       const arrivo = rotazione + giri * 360 + resto;
 
       const anim = disco.animate([{ transform: `rotate(${rotazione}deg)` }, { transform: `rotate(${arrivo}deg)` }], {
